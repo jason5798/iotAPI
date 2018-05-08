@@ -9,6 +9,8 @@ module.exports = {
 
 function sendMessage(topic, message) {
 	var options = {
+		username: config.mqttName,
+        password: config.mqttPassword,
 		port: config.mqttPort,
 		host: config.mqttHost,
 		protocolId: 'MQIsdp',

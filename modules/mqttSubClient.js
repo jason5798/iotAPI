@@ -16,8 +16,8 @@ scheduleCronstyle();
 var options = {
 	port: config.mqttPort,
     host: config.mqttHost,
-    username: "apiUser",
-    password: "apiPwd",
+    username: config.mqttName,
+    password: config.mqttPassword,
 	protocolId: 'MQIsdp',
 	protocolVersion: 3
 };

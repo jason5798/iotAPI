@@ -73,10 +73,11 @@ function findLast (json) {
                 }
                 reject(err);
             }else{
-                if (debug) {
-                    console.log(new Date() + 'findLast : ' + JSON.stringify(docs[0]));
+                var map = null;
+                if (map && map.length > 0) {
+                    map = docs[0];
                 }
-                resolve(docs[0]);
+                resolve(map);
             }
         });
     });

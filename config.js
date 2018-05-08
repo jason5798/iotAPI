@@ -35,15 +35,17 @@ config.isAgri = true;
 //Server
 config.server = 'http://localhost:'+ config.port + '/';
 //MQTT
-config.mqttHost = '119.81.189.47';
+config.mqttHost = 'localhost';
 config.mqttPort = 1883;
 config.mytopic = 'GIOT-GW/UL/+';
+config.mqttName = 'gemtek';
+config.mqttPassword = 'gemtek1234ost5';
 //line-bot
 config.channelId = '';
 config.channelSecret = '';
 config.channelAccessToken = '';
 //Is cloudant DB true, is local mongoDB false
-config.isCloudantDb = false;
+config.isCloudantDb = true;
 //Cloudant DB
 config.cloudantAccount = '';
 config.cloudantPassword = '';
