@@ -3,33 +3,30 @@ var Schema = mongoose.Schema;
 var config = require('../../config');
 var debug = config.debug;
 
-let mapSchema = new Schema({
-    deviceType : {  type: String, required: true},
-    typeName   : {  type: String, required: true},
-    fieldName  : {  type: Schema.Types.Mixed, 
+let profileSchema = new Schema({
+    macAddr       : {  type: String, required: true},
+    notify        : {  type: Schema.Types.Mixed, 
                     default: null, 
                     required: false},
-    map        : {  type: Schema.Types.Mixed, 
-                    default: null, 
-                    required: true},
-    createUser : {  type: String, 
+    control       : {  type: Schema.Types.Mixed, 
                     default: null, 
                     required: false},
-    createTime : {  type: Date, 
+    controlDevice : {  type: String, required: false},
+    createUser    : {  type: String, 
                     default: null, 
                     required: false},
-    updateUser : {  type: String, 
+    createTime    : {  type: Date, 
                     default: null, 
                     required: false},
-    updateTime : {  type: Date, 
+    updateUser    : {  type: String, 
                     default: null, 
                     required: false},
-    profile    : {  type: Schema.Types.Mixed, 
+    updateTime    : {  type: Date, 
                     default: null, 
                     required: false}
 });
 
-var MapModel = mongoose.model('Map', mapSchema);
+var ProfileModel = mongoose.model('Profile', profileSchema);
 
 module.exports = {
     create,
@@ -40,20 +37,19 @@ module.exports = {
 }
 
 function create (obj) {
-    var newMap = new MapModel({
-        deviceType  : obj.deviceType,
-        typeName    : obj.typeName,
-        fieldName   : obj.fieldName,
-        map         : obj.map,
-        createUser  : obj.createUser,
-        createTime  : obj.createTime,
-        updateUser  : null,
-        updateTime  : null,
-        profile     : null
+    var newProfile = new ProfileModel({
+        macAddr       : obj.macAddr,
+        notify        : obj.notify,
+        control       : obj.control,
+        controlDevice : obj.controlDevice,
+        createUser    : obj.createUser,
+        createTime    : obj.createTime,
+        updateUser    : null,
+        updateTime    : null,
     });
     return new Promise(function (resolve, reject) {
-        var json = {"deviceType"  : obj.deviceType};
-        MapModel.find(json).sort({recv: -1}).limit(1).exec(function(err,docs){
+        var json = {"macAddr": obj.macAddr};
+        ProfileModel.find(json).sort({recv: -1}).limit(1).exec(function(err,docs){
             if(err){
                 if (debug) {
                     console.log(new Date() + 'findLast err : ' + err.message);
@@ -61,26 +57,26 @@ function create (obj) {
                 reject(err);
             }else{
                 if (docs && docs.length > 0) {
-                    reject('Has same map');
+                    reject('Has same profile');
                     return;
                 }
-                newMap.save(function(err, docs){
+                newProfile.save(function(err, docs){
                     if(!err){
                         // console.log(now + ' Debug : Device save fail!');
-                        resolve(docs);
+                        resolve('Create profile success');
                     }else{
                         // console.log(now + ' Debug : Device save success.');
                         reject(err);
                     }
                 });
             }
-        })
+        });
     });
 }
 
 function findLast (json) {
     return new Promise(function (resolve, reject) {
-        MapModel.find(json).sort({recv: -1}).limit(1).exec(function(err,docs){
+        ProfileModel.find(json).sort({recv: -1}).limit(1).exec(function(err,docs){
             if(err){
                 if (debug) {
                     console.log(new Date() + 'findLast err : ' + err.message);
@@ -99,7 +95,7 @@ function findLast (json) {
 
 function find (json) {
     return new Promise(function (resolve, reject) {
-        MapModel.find(json).exec(function(err,docs){
+        ProfileModel.find(json).exec(function(err,docs){
             if(err){
                 if (debug) {
                     console.log(new Date() + 'find err : ' + err.message);
@@ -117,20 +113,20 @@ function find (json) {
 
 function update (conditions, json) {
     return new Promise(function (resolve, reject) {
-        MapModel.update(conditions,
+        ProfileModel.update(conditions,
             json,
             {safe : true, upsert : true},
             (err, rawResponse)=>{
                 if (err) {
                     if (debug) {
-                        console.log(new Date() + 'update map err : ' + err.message);
+                        console.log(new Date() + 'update profile err : ' + err.message);
                     }
                     reject(err);
                 } else {
                     if (debug) {
-                        console.log(new Date() + 'update map : ' + rawResponse);
+                        console.log(new Date() + 'update profile : ' + rawResponse);
                     }
-                    resolve('Update map success');
+                    resolve('Update profile success');
                 }
         });
     });
@@ -138,13 +134,13 @@ function update (conditions, json) {
 
 function remove (json) {
     return new Promise(function (resolve, reject) {
-        MapModel.remove(json, (err)=>{
+        ProfileModel.remove(json, (err)=>{
             if (err) {
-              console.log('Map remove occur a error:', err);
+              console.log('Profile remove occur a error:', err);
                reject(err);
             } else {
-                console.log('Map remove success');
-                resolve('Map remove success');
+                console.log('Delete profile success');
+                resolve('Delete profile success');
             }
         });
     });

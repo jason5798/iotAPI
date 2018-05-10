@@ -902,8 +902,8 @@ module.exports = (function() {
 
 		dbEvent.findLast(json).then(function(result) {
 			if(result && result.length > 0){
-				d['LoRaAP'] = result[0].extra.gwid;
-				d['fport'] = result[0].extra.fport;
+				d['LoRaAP'] = result.extra.gwid;
+				d['fport'] = result.extra.fport;
 			}else{
 				d['LoRaAP'] = 'NA';
 				d['fport'] = 0;

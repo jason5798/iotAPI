@@ -26,11 +26,11 @@ function findLast(json){
     myobj.limit = 1;
     return new Promise(function (resolve, reject) {
         dbUtil.queryDoc(myobj).then(function(value) {
-            var map = null;
-            if(value.docs.length > 0){
-                map = value.docs[0];
+            var doc = null;
+            if(value && value.docs.length > 0){
+                doc = value.docs[0];
             }
-            resolve(map);
+            resolve(doc);
         }, function(reason) {
             reject(reason);
         });
@@ -57,36 +57,45 @@ function find(json){
 
 function create(json){
     json.category = 'map';
-    json.createTime  = new Date();
     json.updateUser  = null,
-    json.updateTime  = null,
-    json.profile     = null
+    json.updateTime  = null
     return new Promise(function (resolve, reject) {
-        dbUtil.insert(json).then(function(value) {
-            // on fulfillment(已實現時)
-            console.log("#### Insert map success :"+value);
-            resolve(value);
-        }, function(reason) {
-            console.log("???? Insert map fail :" + reason);
+        var myobj = JSON.parse(JSON.stringify(mapObj)); 
+        myobj.selector.deviceType = json.deviceType;
+        console.log('caeate map obj : ' + JSON.stringify(myobj));
+        dbUtil.queryDoc(myobj).then(function(value) {
+            if(value.docs.length > 0){
+              reject("Has same type");
+              return;
+            }
+            dbUtil.insert(json).then(function(value) {
+                // on fulfillment(已實現時)
+                console.log("#### Insert map success :"+value);
+                resolve(value);
+            }, function(reason) {
+                console.log("???? Insert map fail :" + reason);
+                reject(reason);
+            }); 
+          }, function(reason) {
             reject(reason);
-        }); 
+          });
     })
 }
   
 function remove(json){
     var myobj = JSON.parse(JSON.stringify(mapObj)); 
     myobj.selector.deviceType = json.deviceType;
-    console.log('delProfile myobj : ' + JSON.stringify(myobj));
+    console.log('del map myobj : ' + JSON.stringify(myobj));
     return new Promise(function (resolve, reject) {
         dbUtil.queryDoc(myobj).then(function(value) {
-            var mapList = [];
+            var list = [];
             if(value.docs.length > 0){
-                mapList = value.docs;
+                list = value.docs;
             }
-            var mapDoc;
-            if( mapList.length > 0) {
-                mapDoc = mapList[0];
-                dbUtil.removeDoc(mapDoc._id, mapDoc._rev).then(function(value) {
+            var doc;
+            if( list.length > 0) {
+                doc = list[0];
+                dbUtil.removeDoc(doc._id, doc._rev).then(function(value) {
                     resolve('ok');
                 }, function(reason) {
                     reject(reason);
@@ -104,35 +113,35 @@ function remove(json){
 function update(condition, json){
     var myobj = JSON.parse(JSON.stringify(mapObj)); 
     myobj.selector.deviceType = condition.deviceType;
-    console.log('updateZone myobj : ' + JSON.stringify(myobj));
+    console.log('update map myobj : ' + JSON.stringify(myobj));
     return new Promise(function (resolve, reject) {
         dbUtil.queryDoc(myobj).then(function(value) {
-            var mapList = [];
+            var list = [];
             if(value.docs.length > 0){
-                mapList = value.docs;
+                list = value.docs;
             }
-            var mapDoc = mapList[0];
-            console.log('mapDoc._id : ' + mapDoc._id)
+            var doc = list[0];
+            console.log('doc._id : ' + doc._id)
             //zone.deviceList = newZone.deviceList;
             if (json.fieldName) {
-                mapDoc.fieldName =  json.fieldName;
+                doc.fieldName =  json.fieldName;
             }
             if (json.map) {
-                mapDoc.map =  json.map;
+                doc.map =  json.map;
             }
             if (json.typeName) {
-                mapDoc.typeName =  json.typeName;
+                doc.typeName =  json.typeName;
             }
             if (json.profile) {
-                mapDoc.profile = json.profile;
+                doc.profile = json.profile;
             }
-            dbUtil.insert(mapDoc).then(function(value) {
+            dbUtil.insert(doc).then(function(value) {
                 // on fulfillment(已實現時)
-                console.log("#### Update zone success :"+ JSON.stringify(value));
+                console.log("#### Update map success :"+ JSON.stringify(value));
                 resolve(value);
             }, function(reason) {
                 // on rejection(已拒絕時)
-                console.log("???? Update zone fail :" + reason);
+                console.log("???? Update map fail :" + reason);
                 reject(reason);
             });
         }, function(reason) {

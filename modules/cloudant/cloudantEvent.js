@@ -52,11 +52,11 @@ function findLast(json){
     myobj.limit = 1;
     return new Promise(function (resolve, reject) {
         dbUtil.queryDoc(myobj).then(function(value) {
-            var deviceList = [];
-            if(value.docs.length > 0){
-                deviceList = value.docs;
+            var doc = null;
+            if(value && value.docs.length > 0){
+                doc = value.docs[0];
             }
-            resolve(deviceList);
+            resolve(doc);
         }, function(reason) {
             reject(reason);
         });

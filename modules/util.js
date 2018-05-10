@@ -39,7 +39,6 @@ module.exports = {
     createMap,
     checkAndParseDeviceToken,
     checkAndParseToken,
-    checkAndParseMessage,
     checkFormData,
     isDebug,
     isAuth,
@@ -537,67 +536,6 @@ function checkAndParseToken (token, res, callback) {
 	});
 }
 
-function checkAndParseMessage (message, callback) {
-    if (getType(message) === 'string') {
-        try {
-            var mesObj = JSON.parse(message);
-        } catch (error) {
-            return callback(error.message);
-        }
-        
-        if (getType(mesObj) === 'other') {
-            return callback('Not JSON');
-        }
-        var obj = mesObj[0];
-    } else if (getType(message) === 'object'){
-        var obj = message;
-    }
-    var json = {"macAddr": obj.macAddr, "extra.frameCnt": obj.frameCnt};
-    
-	async.series([
-		function(next){
-			mongoDevice.findLast(json, function(err1, result1){
-                next(err1, result1);
-			});
-		},
-		function(next){
-			parseMsgd(obj, function(err2, result2){
-                next(err2, result2);
-			});
-		}
-	], function(errs, results){
-        if(errs){
-            console.log(new Date() + 'checkAndParseMessage err : ' + JSON.stringify(errs));
-            return callback(errs);
-        } 
-        // console.log('results[0] : ' + results[0]);
-        // console.log('results[1] : ' + JSON.stringify(results[1]));
-        if (results[0].length === 0) {
-            //If no same data
-            console.log('No same data, return publish message');
-            //Save message to mongo database
-            saveMsgToDB(results[1]);
-            return callback(null, results[1]);
-        } else if (results[0].length === 1){
-            //If has same data then check timestamp
-            var ts1 = results[0][0].timestamp;
-            var ts2 = results[1].timestamp;
-            // If over ond day to forward data
-            if (Math.abs(ts1 -ts2) > 86400) {
-                console.log('Has same data (mac,frameCnt) but timestamp is different return publish message');
-                //Save message to mongo database
-                return callback(null, results[1]);
-            } else {
-                console.log('Has same data to drop message');
-                return callback({
-                    "responseCode" : '401',
-                    "responseMsg" : 'Has same data'
-                });
-            }
-        }
-    });
-}
-
 function checkFormData (req, checkArr) {
     try {
         var keys = '';
@@ -611,16 +549,7 @@ function checkFormData (req, checkArr) {
         keys.forEach(function(key,index) {
             // console.log('index : ' + index + ', key : ' + key );
             if(checkArr.indexOf(key) !== -1) {
-                if(key === 'map' || key === 'fieldName') {
-                    if (typeof(req.body[key]) !== 'string') {
-                        json[key] = req.body[key];
-                    } else {
-                        json[key] = JSON.parse(req.body[key]);
-                    }
-                } else {
-                    json[key] = req.body[key];
-                }
-                
+                json[key] = req.body[key];
                 count ++;
             }
         });

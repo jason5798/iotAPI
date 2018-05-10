@@ -48,11 +48,15 @@ function create (obj) {
 
 function findLast (json) {
     return new Promise(function (resolve, reject) {
-        DeviceModel.find(json).sort({recv: -1}).limit(1).exec(function(err,result){
+        DeviceModel.find(json).sort({recv: -1}).limit(1).exec(function(err,docs){
             if(err){
                 reject(err);
             }else{
-                resolve(result);
+                var doc = null;
+                if (docs && docs.length > 0) {
+                    doc = docs[0];
+                }
+                resolve(doc);
             }
         });
     });

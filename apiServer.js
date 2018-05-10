@@ -12,7 +12,9 @@ var api = require('./routers/api.js'),
 	sys = require('./routers/sys.js'),
 	control = require('./routers/control.js'),
 	device = require('./routers/device.js');
-	log = require('./routers/log.js');
+	log = require('./routers/log.js'),
+	profile = require('./routers/profile.js'),
+	zone = require('./routers/zone.js');
 var config = require('./config');
 var async   = require('async'),
 	request = require('request');
@@ -143,13 +145,15 @@ app.use('/user'  + config.baseurl, user);//Login,logout,User
 app.use('/api' + config.baseurl, api);
 app.use('/admin' + config.baseurl, cp);//Company
 app.use('/admin' + config.baseurl, grp);//Group
-app.use('/device' + config.baseurl, map);//Device type map
+app.use('/admin' + config.baseurl, log);
 app.use('/admin' + config.baseurl, roles);//Role : user limit
 app.use('/admin' + config.baseurl, func);//function : WEB function enable or not
 app.use('/sys' + config.baseurl, sys);
-app.use('/device' + config.baseurl, device);
 app.use('/control' + config.baseurl, control);
-app.use('/admin' + config.baseurl, log);
+app.use('/device' + config.baseurl, map);//Device type map
+app.use('/device' + config.baseurl, device);
+app.use('/device' + config.baseurl, profile);
+app.use('/device' + config.baseurl, zone);
 
 api = require('./routers/api.js'),
 

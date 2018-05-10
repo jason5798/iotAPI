@@ -4,18 +4,22 @@ var async  = require('async');
 var config = require('../config');
 var util = require('../modules/util.js');
 //Jason modify on 2018.05.06 for switch local and cloud db -- start
-var dbMap = null;
+var dbProfile = null;
 if (config.isCloudantDb) {
-    dbMap = require('../modules/cloudant/cloudantMap.js');
+    dbProfile = require('../modules/cloudant/cloudantProfile.js');
 } else {
-    dbMap = require('../modules/mongo/mongoMap.js');
+    dbProfile = require('../modules/mongo/mongoProfile.js');
 }
 //Jason modify on 2018.05.06 for switch local and cloud db -- end
 
 module.exports = (function() {
     //Read 
-	router.get('/maps', function(req, res) {
-		var token = req.query.token;
+	router.get('/profiles', function(req, res) {
+        var token = req.query.token;
+        var json = {};
+        if (req.query.controlDevice) {
+            json.controlDevice = req.query.controlDevice;
+        }
         if ( token === undefined) {
 			res.send({
 				"responseCode" : '999',
@@ -29,8 +33,8 @@ module.exports = (function() {
 				return;
 			} else { 
 				//Token is ok
-                dbMap.find({}).then(function(data) {
-					// on fulfillment(已實現時)
+                dbProfile.find(json).then(function(data) {
+                    // on fulfillment(已實現時)
                     res.status(200);
 					res.setHeader('Content-Type', 'application/json');
 					res.json({
@@ -48,30 +52,34 @@ module.exports = (function() {
 		});
     });
     
-	router.get('/maps/:type', function(req, res) {
+	router.get('/profiles/:macAddr', function(req, res) {
 		var token = req.query.token;
-        var type = req.params.type;
-        if (type === undefined || token === undefined) {
+        var macAddr = req.params.macAddr;
+        if (macAddr === undefined || token === undefined) {
 			res.send({
 				"responseCode" : '999',
 				"responseMsg" : 'Missing parameter'
 			});
 			return false;
 		}
-        var json = {'deviceType': type};
+        var json = {'macAddr': macAddr};
 		
         util.checkAndParseToken(token, res,function(err,result){
 			if (err) {
 				return;
 			} else { 
 				//Token is ok
-                dbMap.find(json).then(function(data) {
-					// on fulfillment(已實現時)
+                dbProfile.find(json).then(function(data) {
+                    // on fulfillment(已實現時)
+                    var value = null;
+                    if (data && data.length > 0) {
+                        value = data[0];
+                    }
                     res.status(200);
 					res.setHeader('Content-Type', 'application/json');
 					res.json({
                         "responseCode" : '000',
-                        "data" : data
+                        "data" : value 
                     });
                 }, function(reason) {
                     // on rejection(已拒絕時)
@@ -82,10 +90,27 @@ module.exports = (function() {
                 }); 
 			}
 		});
-	});
+    });
     
-    router.post('/maps', function(req, res) {
-        var checkArr = ['token','deviceType','typeName','fieldName','map','createUser'];
+    /*notify & control example
+    * {
+        "notify" : {
+            "temperature" : {
+                "high" : {
+                    "active": true, 
+                    "value": 30
+                },
+                "low": {
+                    "active": false, 
+                    "value": 20
+                }
+            }      
+        }
+      }
+    */
+    
+    router.post('/profiles', function(req, res) {
+        var checkArr = ['macAddr', 'createUser'];
         var obj = util.checkFormData(req, checkArr);
         if (obj === null) {
             res.send({
@@ -96,14 +121,14 @@ module.exports = (function() {
         } else if (typeof(obj) === 'string') {
             res.send({
 				"responseCode" : '999',
-				"responseMsg" : obj
+				"responseMsg" : obj.message
 			});
-		}
-		obj.createTime = util.getCurrentUTCDate();
-		if (req.body.map) {
-			if (util.getType(req.body.map) === 'string') {
+        }
+        obj.createTime = util.getCurrentUTCDate();
+        if (req.body.notify) {
+			if (util.getType(req.body.notify) === 'string') {
 				try {
-					obj.map = JSON.parse(req.body.map);
+					obj.notify = JSON.parse(req.body.notify);
 				} catch (error) {
 					res.send({
 						"responseCode" : '404',
@@ -112,13 +137,15 @@ module.exports = (function() {
 					return;
 				}
 			} else {
-				obj.map = req.body.map;
+				obj.notify = req.body.notify;
 			}
-		}
-		if (req.body.fieldName) {
-			if (util.getType(req.body.fieldName) === 'string') {
+        } else {
+            obj.notify = null;
+        }
+        if (req.body.control) {
+			if (util.getType(req.body.control) === 'string') {
 				try {
-					obj.fieldName = JSON.parse(req.body.fieldName);
+					obj.control = JSON.parse(req.body.control);
 				} catch (error) {
 					res.send({
 						"responseCode" : '404',
@@ -127,21 +154,43 @@ module.exports = (function() {
 					return;
 				}
 			} else {
-				obj.fieldName = req.body.fieldName;
-			}
-		}
+				obj.control = req.body.control;
+            }
+            if (req.body.controlDevice === undefined) {
+                res.send({
+                    "responseCode" : '999',
+                    "responseMsg" : 'Missing controlDevice'
+                });
+                return;
+            } 
+        } else {
+            obj.control = null;
+        }
+        if (req.body.controlDevice) {
+            obj.controlDevice = req.body.controlDevice;
+            if (req.body.control === undefined) {
+                res.send({
+                    "responseCode" : '999',
+                    "responseMsg" : 'Missing control'
+                });
+                return;
+            } 
+        } else {
+            obj.controlDevice = null;
+        }
+        
         util.checkAndParseToken(req.body.token, res,function(err,result){
 			if (err) {
 				return;
 			} else { 
 				//Token is ok
-                dbMap.create(obj).then(function(data) {
+                dbProfile.create(obj).then(function(data) {
                     // on fulfillment(已實現時)
                     res.status(200);
 					res.setHeader('Content-Type', 'application/json');
 					res.json({
                         "responseCode" : '000',
-                        "data" : 'Create map success'
+                        "responseMsg" : 'Create profile success'
                     });
                 }, function(reason) {
                     // on rejection(已拒絕時)
@@ -154,8 +203,8 @@ module.exports = (function() {
 		});
 	});
 
-	router.put('/maps', function(req, res) {
-        var checkArr = ['deviceType', 'updateUser'];
+	router.put('/profiles', function(req, res) {
+        var checkArr = ['macAddr', 'updateUser'];
         var obj = util.checkFormData(req, checkArr);
         if (obj === null) {
             res.send({
@@ -166,15 +215,15 @@ module.exports = (function() {
         } else if (typeof(obj) === 'string') {
             res.send({
 				"responseCode" : '999',
-				"responseMsg" : obj
+				"responseMsg" : obj.message
 			});
 			return;
-		}
-		obj.updateTime = util.getCurrentUTCDate();
-        if (req.body.map) {
-			if (util.getType(req.body.map) === 'string') {
+        }
+        obj.updateTime = util.getCurrentUTCDate();
+        if (req.body.notify) {
+			if (util.getType(req.body.notify) === 'string') {
 				try {
-					obj.map = JSON.parse(req.body.map);
+					obj.notify = JSON.parse(req.body.notify);
 				} catch (error) {
 					res.send({
 						"responseCode" : '404',
@@ -183,13 +232,13 @@ module.exports = (function() {
 					return;
 				}
 			} else {
-				obj.map = req.body.map;
+				obj.notify = req.body.notify;
 			}
-		}
-		if (req.body.fieldName) {
-			if (util.getType(req.body.fieldName) === 'string') {
+        }
+        if (req.body.control) {
+			if (util.getType(req.body.control) === 'string') {
 				try {
-					obj.fieldName = JSON.parse(req.body.fieldName);
+					obj.control = JSON.parse(req.body.control);
 				} catch (error) {
 					res.send({
 						"responseCode" : '404',
@@ -198,41 +247,40 @@ module.exports = (function() {
 					return;
 				}
 			} else {
-				obj.fieldName = req.body.fieldName;
-			}
-		}
+				obj.control = req.body.control;
+            }
+            if (req.body.controlDevice === undefined) {
+                res.send({
+                    "responseCode" : '999',
+                    "responseMsg" : 'Missing controlDevice'
+                });
+                return;
+            } 
+        }
+        if (req.body.controlDevice) {
+            obj.controlDevice = req.body.controlDevice;
+            if (req.body.control === undefined) {
+                res.send({
+                    "responseCode" : '999',
+                    "responseMsg" : 'Missing control'
+                });
+                return;
+            } 
+        } 
+        delete obj.macAddr;
 
-		if (req.body.profile) {
-			if (util.getType(req.body.profile) === 'string') {
-				try {
-					obj.profile = JSON.parse(req.body.profile);
-				} catch (error) {
-					res.send({
-						"responseCode" : '404',
-						"responseMsg" : error.message
-					});
-					return;
-				}
-			} else {
-				obj.profile = req.body.profile;
-			}
-		}
-		if (req.body.typeName) {
-			obj.typeName = req.body.typeName;
-		}
-		delete obj.deviceType; 
         util.checkAndParseToken(req.body.token, res, function(err,result){
 			if (err) {
 				return;
 			} else { 
 				//Token is ok
-                dbMap.update({"deviceType": req.body.deviceType}, obj).then(function(data) {
+                dbProfile.update({"macAddr": req.body.macAddr}, obj).then(function(data) {
                     // on fulfillment(已實現時)
                     res.status(200);
 					res.setHeader('Content-Type', 'application/json');
 					res.json({
-                        'responseCode' : '000',
-                        'data' : 'Update map success'
+                        "responseCode" : '000',
+                        "responseMsg" : "Update profile success"
                     });
                 }, function(reason) {
                     // on rejection(已拒絕時)
@@ -245,8 +293,8 @@ module.exports = (function() {
 		});
 	});
 
-	//Delete by ID 
-	router.delete('/maps', function(req, res) {
+	//Delete by macAddr 
+	router.delete('/profiles', function(req, res) {
 		if (req.body.deviceType === null) {
             res.send({
 				"responseCode" : '999',
@@ -259,13 +307,13 @@ module.exports = (function() {
 				return;
 			} else { 
 				//Token is ok
-                dbMap.remove({"deviceType": req.body.deviceType}).then(function(data) {
+                dbProfile.remove({"macAddr": req.body.macAddr}).then(function(data) {
                     // on fulfillment(已實現時)
                     res.status(200);
 					res.setHeader('Content-Type', 'application/json');
 					res.json({
                         "responseCode" : '000',
-                        "data" : 'Delete map success'
+                        "responseMsg" : "Delete profile success"
                     });
                 }, function(reason) {
                     // on rejection(已拒絕時)

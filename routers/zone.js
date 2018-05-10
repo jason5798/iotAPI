@@ -4,17 +4,17 @@ var async  = require('async');
 var config = require('../config');
 var util = require('../modules/util.js');
 //Jason modify on 2018.05.06 for switch local and cloud db -- start
-var dbMap = null;
+var dbZone = null;
 if (config.isCloudantDb) {
-    dbMap = require('../modules/cloudant/cloudantMap.js');
+    dbZone = require('../modules/cloudant/cloudantZone.js');
 } else {
-    dbMap = require('../modules/mongo/mongoMap.js');
+    dbZone = require('../modules/mongo/mongoZone.js');
 }
 //Jason modify on 2018.05.06 for switch local and cloud db -- end
 
 module.exports = (function() {
     //Read 
-	router.get('/maps', function(req, res) {
+	router.get('/zones', function(req, res) {
 		var token = req.query.token;
         if ( token === undefined) {
 			res.send({
@@ -29,8 +29,8 @@ module.exports = (function() {
 				return;
 			} else { 
 				//Token is ok
-                dbMap.find({}).then(function(data) {
-					// on fulfillment(已實現時)
+                dbZone.find({}).then(function(data) {
+                    // on fulfillment(已實現時)
                     res.status(200);
 					res.setHeader('Content-Type', 'application/json');
 					res.json({
@@ -48,30 +48,34 @@ module.exports = (function() {
 		});
     });
     
-	router.get('/maps/:type', function(req, res) {
+	router.get('/zones/:id', function(req, res) {
 		var token = req.query.token;
-        var type = req.params.type;
-        if (type === undefined || token === undefined) {
+        var zoneId = req.params.id;
+        if (zoneId === undefined || token === undefined) {
 			res.send({
 				"responseCode" : '999',
 				"responseMsg" : 'Missing parameter'
 			});
 			return false;
 		}
-        var json = {'deviceType': type};
+        var json = {'zoneId': zoneId};
 		
         util.checkAndParseToken(token, res,function(err,result){
 			if (err) {
 				return;
 			} else { 
 				//Token is ok
-                dbMap.find(json).then(function(data) {
-					// on fulfillment(已實現時)
+                dbZone.find(json).then(function(data) {
+                    // on fulfillment(已實現時)
+                    var value = null;
+                    if (data && data.length > 0) {
+                        value = data[0];
+                    }
                     res.status(200);
 					res.setHeader('Content-Type', 'application/json');
 					res.json({
                         "responseCode" : '000',
-                        "data" : data
+                        "data" : value 
                     });
                 }, function(reason) {
                     // on rejection(已拒絕時)
@@ -84,8 +88,8 @@ module.exports = (function() {
 		});
 	});
     
-    router.post('/maps', function(req, res) {
-        var checkArr = ['token','deviceType','typeName','fieldName','map','createUser'];
+    router.post('/zones', function(req, res) {
+        var checkArr = ['zoneId', 'name','deviceList','createUser'];
         var obj = util.checkFormData(req, checkArr);
         if (obj === null) {
             res.send({
@@ -96,14 +100,14 @@ module.exports = (function() {
         } else if (typeof(obj) === 'string') {
             res.send({
 				"responseCode" : '999',
-				"responseMsg" : obj
+				"responseMsg" : obj.message
 			});
-		}
-		obj.createTime = util.getCurrentUTCDate();
-		if (req.body.map) {
-			if (util.getType(req.body.map) === 'string') {
+        }
+        obj.createTime = util.getCurrentUTCDate();
+        if (req.body.deviceList) {
+			if (util.getType(req.body.deviceList) === 'string') {
 				try {
-					obj.map = JSON.parse(req.body.map);
+					obj.deviceList = JSON.parse(req.body.deviceList);
 				} catch (error) {
 					res.send({
 						"responseCode" : '404',
@@ -112,22 +116,7 @@ module.exports = (function() {
 					return;
 				}
 			} else {
-				obj.map = req.body.map;
-			}
-		}
-		if (req.body.fieldName) {
-			if (util.getType(req.body.fieldName) === 'string') {
-				try {
-					obj.fieldName = JSON.parse(req.body.fieldName);
-				} catch (error) {
-					res.send({
-						"responseCode" : '404',
-						"responseMsg" : error.message
-					});
-					return;
-				}
-			} else {
-				obj.fieldName = req.body.fieldName;
+				obj.deviceList = req.body.deviceList;
 			}
 		}
         util.checkAndParseToken(req.body.token, res,function(err,result){
@@ -135,13 +124,13 @@ module.exports = (function() {
 				return;
 			} else { 
 				//Token is ok
-                dbMap.create(obj).then(function(data) {
+                dbZone.create(obj).then(function(data) {
                     // on fulfillment(已實現時)
                     res.status(200);
 					res.setHeader('Content-Type', 'application/json');
 					res.json({
                         "responseCode" : '000',
-                        "data" : 'Create map success'
+                        "responseMsg" : 'Create zone success'
                     });
                 }, function(reason) {
                     // on rejection(已拒絕時)
@@ -154,8 +143,8 @@ module.exports = (function() {
 		});
 	});
 
-	router.put('/maps', function(req, res) {
-        var checkArr = ['deviceType', 'updateUser'];
+	router.put('/zones', function(req, res) {
+        var checkArr = ['zoneId', 'updateUser'];
         var obj = util.checkFormData(req, checkArr);
         if (obj === null) {
             res.send({
@@ -166,15 +155,18 @@ module.exports = (function() {
         } else if (typeof(obj) === 'string') {
             res.send({
 				"responseCode" : '999',
-				"responseMsg" : obj
+				"responseMsg" : obj.message
 			});
 			return;
-		}
-		obj.updateTime = util.getCurrentUTCDate();
-        if (req.body.map) {
-			if (util.getType(req.body.map) === 'string') {
+        }
+        if (req.body.name) {
+            obj.name = req.body.name;
+        }
+        obj.updateTime = util.getCurrentUTCDate();
+        if (req.body.deviceList) {
+			if (util.getType(req.body.deviceList) === 'string') {
 				try {
-					obj.map = JSON.parse(req.body.map);
+					obj.deviceList = JSON.parse(req.body.deviceList);
 				} catch (error) {
 					res.send({
 						"responseCode" : '404',
@@ -183,56 +175,23 @@ module.exports = (function() {
 					return;
 				}
 			} else {
-				obj.map = req.body.map;
+				obj.deviceList = req.body.deviceList;
 			}
-		}
-		if (req.body.fieldName) {
-			if (util.getType(req.body.fieldName) === 'string') {
-				try {
-					obj.fieldName = JSON.parse(req.body.fieldName);
-				} catch (error) {
-					res.send({
-						"responseCode" : '404',
-						"responseMsg" : error.message
-					});
-					return;
-				}
-			} else {
-				obj.fieldName = req.body.fieldName;
-			}
-		}
+        }
+        delete obj.zoneId;
 
-		if (req.body.profile) {
-			if (util.getType(req.body.profile) === 'string') {
-				try {
-					obj.profile = JSON.parse(req.body.profile);
-				} catch (error) {
-					res.send({
-						"responseCode" : '404',
-						"responseMsg" : error.message
-					});
-					return;
-				}
-			} else {
-				obj.profile = req.body.profile;
-			}
-		}
-		if (req.body.typeName) {
-			obj.typeName = req.body.typeName;
-		}
-		delete obj.deviceType; 
         util.checkAndParseToken(req.body.token, res, function(err,result){
 			if (err) {
 				return;
 			} else { 
 				//Token is ok
-                dbMap.update({"deviceType": req.body.deviceType}, obj).then(function(data) {
+                dbZone.update({"zoneId": req.body.zoneId}, obj).then(function(data) {
                     // on fulfillment(已實現時)
                     res.status(200);
 					res.setHeader('Content-Type', 'application/json');
 					res.json({
-                        'responseCode' : '000',
-                        'data' : 'Update map success'
+                        "responseCode" : '000',
+                        "responseMsg" : "Update zone success"
                     });
                 }, function(reason) {
                     // on rejection(已拒絕時)
@@ -246,7 +205,7 @@ module.exports = (function() {
 	});
 
 	//Delete by ID 
-	router.delete('/maps', function(req, res) {
+	router.delete('/zones', function(req, res) {
 		if (req.body.deviceType === null) {
             res.send({
 				"responseCode" : '999',
@@ -259,13 +218,13 @@ module.exports = (function() {
 				return;
 			} else { 
 				//Token is ok
-                dbMap.remove({"deviceType": req.body.deviceType}).then(function(data) {
+                dbZone.remove({"name": req.body.name}).then(function(data) {
                     // on fulfillment(已實現時)
                     res.status(200);
 					res.setHeader('Content-Type', 'application/json');
 					res.json({
                         "responseCode" : '000',
-                        "data" : 'Delete map success'
+                        "responseMsg" : "Delete zone success"
                     });
                 }, function(reason) {
                     // on rejection(已拒絕時)
