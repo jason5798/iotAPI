@@ -175,21 +175,28 @@ module.exports = (function() {
 	//delete logs
 	router.delete('/logs', function(req, res) {
 		//Check params
-		var token = req.query.token;
-		var delDeviceId = req.query.delDeviceId;
+		var token = null;
+		if (req.query.token) { 
+			token = req.query.token;
+		} else if (req.body.token) { 
+			token = req.body.token;
+		}
 		var actInfo = {};
-        if (delDeviceId === undefined) {
-            res.send({
+		if (req.query.delDeviceId) { 
+			actInfo.delDeviceId = req.query.delDeviceId;
+		} else if (req.body.token) { 
+			actInfo.delDeviceId = req.body.delDeviceId;
+		} else {
+			res.send({
 				"responseCode" : '999',
 				"responseMsg" : 'Missing parameter'
 			});
 			return;
 		}
-		actInfo.delDeviceId = delDeviceId;
 
         async.waterfall([
 			function(next){
-				util.checkAndParseToken(req.query.token, res,function(err1, result1){
+				util.checkAndParseToken(token, res,function(err1, result1){
 					if (err1) {
 						return;
 					} else { 

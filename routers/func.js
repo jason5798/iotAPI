@@ -34,7 +34,7 @@ module.exports = (function() {
         }
     });
 
-    //Delete grp
+    //Delete func
 	router.delete('/', function(req, res) {
 		var checkArr = ['token', 'funcId'];
         var obj = util.checkFormData(req, checkArr);

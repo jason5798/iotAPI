@@ -206,19 +206,36 @@ module.exports = (function() {
 
 	//Delete by ID 
 	router.delete('/zones', function(req, res) {
-		if (req.body.deviceType === null) {
-            res.send({
+        var name = null;
+		var token = null;
+		if (req.query.token) { 
+			token = req.query.token;
+		} else if (req.body.token) { 
+			token = req.body.token;
+		} else {
+			res.send({
 				"responseCode" : '999',
 				"responseMsg" : 'Missing parameter'
 			});
 			return;
 		}
-		util.checkAndParseToken(req.body.token, res,function(err,result){
+		if (req.query.name) { 
+			name = req.query.name;
+		} else if (req.body.name) { 
+			name = req.body.name;
+		} else {
+			res.send({
+				"responseCode" : '999',
+				"responseMsg" : 'Missing parameter'
+			});
+			return;
+		}
+		util.checkAndParseToken(token, res,function(err,result){
 			if (err) {
 				return;
 			} else { 
 				//Token is ok
-                dbZone.remove({"name": req.body.name}).then(function(data) {
+                dbZone.remove({"name": name}).then(function(data) {
                     // on fulfillment(已實現時)
                     res.status(200);
 					res.setHeader('Content-Type', 'application/json');

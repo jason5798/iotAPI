@@ -247,19 +247,36 @@ module.exports = (function() {
 
 	//Delete by ID 
 	router.delete('/maps', function(req, res) {
-		if (req.body.deviceType === null) {
-            res.send({
+		var deviceType = null;
+		var token = null;
+		if (req.query.token) { 
+			token = req.query.token;
+		} else if (req.body.token) { 
+			token = req.body.token;
+		} else {
+			res.send({
 				"responseCode" : '999',
 				"responseMsg" : 'Missing parameter'
 			});
 			return;
 		}
-		util.checkAndParseToken(req.body.token, res,function(err,result){
+		if (req.query.deviceType) { 
+			deviceType = req.query.deviceType;
+		} else if (req.body.deviceType) { 
+			deviceType = req.body.deviceType;
+		} else {
+			res.send({
+				"responseCode" : '999',
+				"responseMsg" : 'Missing parameter'
+			});
+			return;
+		}
+		util.checkAndParseToken(token, res,function(err,result){
 			if (err) {
 				return;
 			} else { 
 				//Token is ok
-                dbMap.remove({"deviceType": req.body.deviceType}).then(function(data) {
+                dbMap.remove({"deviceType": deviceType}).then(function(data) {
                     // on fulfillment(已實現時)
                     res.status(200);
 					res.setHeader('Content-Type', 'application/json');

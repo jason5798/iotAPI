@@ -156,15 +156,30 @@ module.exports = (function() {
 
     //Delete Users 
 	router.delete('/', function(req, res) {
-		var checkArr = ['token', 'delUserId'];
-        var obj = util.checkFormData(req, checkArr);
-        if (obj === null) {
-            res.send({
-				"responseCode" : '999', 
+		var cpId = null;
+		var token = null;
+		if (req.query.token) { 
+			token = req.query.token;
+		} else if (req.body.token) { 
+			token = req.body.token;
+		} else {
+			res.send({
+				"responseCode" : '999',
 				"responseMsg" : 'Missing parameter'
 			});
 			return;
-        }
+		}
+		if (req.query.cpId) { 
+			cpId = req.query.cpId;
+		} else if (req.body.cpId) { 
+			cpId = req.body.cpId;
+		} else {
+			res.send({
+				"responseCode" : '999',
+				"responseMsg" : 'Missing parameter'
+			});
+			return;
+		}
     });
 
 	return router;

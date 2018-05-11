@@ -516,6 +516,7 @@ function checkAndParseToken (token, res, callback) {
                 let accessFlg = false
                 let OAFlg = false
                 for(let i = 0 ; i < ar.length ; i++){
+                    //For admin (group)
                     if(ar[i] === '22'|| ar[i] === '30'){
                         accessFlg = true
                     }

@@ -39,7 +39,30 @@ module.exports = (function() {
     //Delete roles
 	router.delete('/', function(req, res) {
 		var checkArr = ['token', 'roleId'];
-        var obj = util.checkFormData(req, checkArr);
+        var roleId = null;
+		var token = null;
+		if (req.query.token) { 
+			token = req.query.token;
+		} else if (req.body.token) { 
+			token = req.body.token;
+		} else {
+			res.send({
+				"responseCode" : '999',
+				"responseMsg" : 'Missing parameter'
+			});
+			return;
+		}
+		if (req.query.roleId) { 
+			roleId = req.query.roleId;
+		} else if (req.body.roleId) { 
+			roleId = req.body.roleId;
+		} else {
+			res.send({
+				"responseCode" : '999',
+				"responseMsg" : 'Missing parameter'
+			});
+			return;
+		}
         if (obj === null) {
             res.send({
 				"responseCode" : '999', 
