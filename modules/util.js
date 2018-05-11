@@ -303,7 +303,8 @@ function getTypeData(data,mapObj) {
         var count = keys.length;
         for(var i =0;i<count;i++){
             //console.log( keys[i]+' : '+ obj[keys[i]]);
-            info[keys[i]] = getIntData(obj[keys[i]],data);
+            let parseData =  getIntData(obj[keys[i]],data);
+            info[keys[i]] = parseData.toFixed(2);
             // console.log(keys[i] + ' : ' + info[keys[i]]);
         }
         return info;
@@ -437,8 +438,22 @@ function checkAndParseToken (token, res, callback) {
 	}
 		
 	// Decrypt 
-	console.log('token :\n' + token);
-    var tArr = getUserTokenArr(token);
+    console.log('token :\n' + token);
+    try {
+        var tArr = getUserTokenArr(token);
+    } catch (error) {
+        res.send({
+            "responseCode" : '999',
+            "responseMsg" : 'token parse error' + error.message
+        })
+    }
+    if (tArr.length < 5) {
+        res.send({
+            "responseCode" : '999',
+            "responseMsg" : 'token parse error'
+        })
+    }
+    
     var ts = tArr[1];
     var actInfo = {};
     actInfo['grp'] = tArr[0];
