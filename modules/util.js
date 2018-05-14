@@ -635,6 +635,10 @@ function getMacString(mac) {
 }
 
 function addLog (json) {
+    if (!config.isAddLog) {
+        //Bypass add log
+        return;
+    }
     if(json.recv === undefined || json.recv === null) {
         json.recv = getCurrentUTCDate();
     }

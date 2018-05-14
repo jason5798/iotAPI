@@ -8,35 +8,27 @@ var eventObj = {
 
 var eventObj2 = {
     "selector": {
-      "macAddr": "0000000004000493",
+        "category":"event"
       /*"date": {
               "$gte": "2017-09-23T10:00",
               "$lt": "2017-09-24T12:00"
           }*/
     },
-    "fields": [
-      "recv",
-      "date",
-      "timestamp",
-      "data",
-      "extra",
-      "information"
-    ],
     "sort": [
        {
-          "date": "asc"
+          "recv": "asc"
        }
     ]
   };
   var asc = [
     {
-       "date": "asc"
+       "recv": "asc"
     }
  ];
 
  var desc = [
     {
-       "date": "desc"
+       "recv": "desc"
     }
  ];
 
@@ -102,7 +94,15 @@ function find(json, paginate, offset, page_limit, sort) {
     if (json.recv) {
         myobj.selector.recv = json.recv;
     }
-    
+    if (json.fport > 0) {
+        myobj.selector.extra = {};
+        myobj.selector.extra.fport = json.fport;
+    }
+    if(sort==='desc') {
+        myobj.sort = desc;
+    } else {
+        myobj.sort = asc;
+    }
     
     console.log('myobj.sort : ' + JSON.stringify(myobj.sort));
     console.log('query event : ' + JSON.stringify(myobj));

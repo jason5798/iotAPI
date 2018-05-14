@@ -144,7 +144,7 @@ router.get('/', function(req, res) {
 app.use('/user'  + config.baseurl, user);//Login,logout,User
 app.use('/api' + config.baseurl, api);
 app.use('/admin' + config.baseurl, cp);//Company
-app.use('/admin' + config.baseurl, grp);//Group
+app.use('/admin' + config.baseurl, grp);//Group	
 app.use('/admin' + config.baseurl, log);
 app.use('/admin' + config.baseurl, roles);//Role : user limit
 app.use('/admin' + config.baseurl, func);//function : WEB function enable or not

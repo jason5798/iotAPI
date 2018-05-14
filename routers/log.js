@@ -287,12 +287,21 @@ module.exports = (function() {
 					"responseMsg" : 'update fail'
 				});
 			} else if (rst) {
-				res.send({
-					"responseCode" : '000',
-					"responseMsg" : 'query success',
-					"size" : rst.length,
-					"list" : rst
-				});
+				if (rst) {
+					res.json({
+						"responseCode" : '000',
+						"responseMsg" : 'success',
+						"size" : rst.length,
+						"data" : rst
+					});
+				} else {
+					res.json({
+						"responseCode" : '000',
+						"responseMsg" : 'success',
+						"size" : 0,
+						"data" : []
+					});
+				}
 			} else {
 				res.send({
 					"responseCode" : '000',

@@ -36,7 +36,7 @@ module.exports = (function() {
         }
     });
 
-    //Delete roles
+    //Delete egrps
 	router.delete('/', function(req, res) {
 		var checkArr = ['token', 'roleId'];
         var obj = util.checkFormData(req, checkArr);

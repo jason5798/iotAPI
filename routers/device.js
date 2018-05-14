@@ -34,7 +34,7 @@ function findDevices (json, req, res) {
 			json['macAddr'] = util.getMacString(req.query.macAddr);
 		}
 		if (req.query.fport) {
-			json['extra.fport'] = Number(req.query.fport);
+			json['fport'] = Number(req.query.fport);
 		}
 		if (req.query.sort) {
 			sort = req.query.sort;
@@ -366,15 +366,6 @@ module.exports = (function() {
 						//Token is ok
 						actInfo = util.addJSON(actInfo, result1.userInfo);
 						console.log('actInfo : ' + JSON.stringify(actInfo));
-						// check roleId
-						if (actInfo.roleId !== 1) {
-							// set no permission
-							res.send({
-								"responseCode" : '401',
-								"responseMsg" : 'no permission to access'
-							});
-							return;
-						}
 						let sqlStr = 'update api_device_info set device_status = 1, device_active_time = current_time(), updateTime = current_time(), device_cp_id = '+actInfo.cpId+', updateUser = ' +actInfo.userId+ ' where device_status = 0 and device_mac = "' + actInfo.mac +'"';
 						//Jason add for agri sensor active
 						if (actInfo.agri === 'true') {
@@ -666,31 +657,61 @@ module.exports = (function() {
 		});
 	});
 
-	//delete user
+	//delete devices
 	router.delete('/device', function(req, res) {
 		//Check params
-		var token = req.query.token;
-		var delDeviceId = req.query.delDeviceId;
+		var token = null;
 		var actInfo = {};
-        if (delDeviceId === undefined) {
-            res.send({
+		if (req.query.token) {
+			token = req.query.token;
+		} else if (req.body.token) {
+			token = req.body.token;
+		} else {
+			res.send({
 				"responseCode" : '999',
 				"responseMsg" : 'Missing parameter'
 			});
 			return;
 		}
-		//Jason add for log delete mac on 2018.04.28 -- start 
+		if (req.query.delDeviceId) {
+			actInfo.delDeviceId = req.query.delDeviceId;
+		} else if (req.body.deviceType) {
+			actInfo.delDeviceId = req.body.delDeviceId;
+		} else {
+			res.send({
+				"responseCode" : '999',
+				"responseMsg" : 'Missing parameter'
+			});
+			return;
+		}
+
+		//Jason add for log delete mac on 2018.04.28 -- start
 		if (req.query.mac) {
-            actInfo.mac = req.query.mac;
+			actInfo.mac = req.query.mac;
+		} else if (req.body.getMacString) {
+			actInfo.mac = req.body.mac;
+		} else {
+			res.send({
+				"responseCode" : '999',
+				"responseMsg" : 'Missing parameter'
+			});
+			return;
 		}
 		if (req.query.name) {
-            actInfo.name = req.query.name;
+			actInfo.name = req.query.name;
+		} else if (req.body.name) {
+			actInfo.name = req.body.name;
+		} else {
+			res.send({
+				"responseCode" : '999',
+				"responseMsg" : 'Missing parameter'
+			});
+			return;
 		}
-		actInfo.delDeviceId = delDeviceId;
 
         async.waterfall([
 			function(next){
-				util.checkAndParseToken(req.query.token, res,function(err1, result1){
+				util.checkAndParseToken(token, res,function(err1, result1){
 					if (err1) {
 						return;
 					} else { 
@@ -941,13 +962,13 @@ module.exports = (function() {
 						actInfo = util.addJSON(actInfo, result1.userInfo);
 						if (actInfo.dataset === 0) {
 							// set all device query
-							sqlStr = 'select deviceId, device_mac, device_name, device_status, device_active_time, device_bind_time, device_cp_id, device_user_id, device_status, device_status, device_IoT_org, device_IoT_type, case when device_status = 0 then "unopened" when device_status = 1 then "active"  when device_status = 2 then "binding" when device_status = 3 then "in used" else "unknown" end as statusDesc  from api_device_info where device_type = "LoRaM"';
+							sqlStr = 'select deviceId, device_mac, device_name, device_status, device_active_time, device_bind_time, device_cp_id, device_user_id, device_status, device_status, device_IoT_org, device_IoT_type, fport, case when device_status = 0 then "unopened" when device_status = 1 then "active"  when device_status = 2 then "binding" when device_status = 3 then "in used" else "unknown" end as statusDesc  from api_device_info where device_type = "LoRaM"';
 						} else if (actInfo.dataset === 1) {
 							// set CP device query
-							sqlStr = 'select deviceId, device_mac, device_name, device_status, device_active_time, device_bind_time, device_cp_id, device_user_id, device_status, device_status, device_IoT_org, device_IoT_type, case when device_status = 0 then "unopened" when device_status = 1 then "active"  when device_status = 2 then "binding" when device_status = 3 then "in used" else "unknown" end as statusDesc  from api_device_info where device_type = "LoRaM" and device_cp_id = '+actInfo.cpId;
+							sqlStr = 'select deviceId, device_mac, device_name, device_status, device_active_time, device_bind_time, device_cp_id, device_user_id, device_status, device_status, device_IoT_org, device_IoT_type, fport,case when device_status = 0 then "unopened" when device_status = 1 then "active"  when device_status = 2 then "binding" when device_status = 3 then "in used" else "unknown" end as statusDesc  from api_device_info where device_type = "LoRaM" and device_cp_id = '+actInfo.cpId;
 						} else if (actInfo.dataset === 2) {
 							// set user device query
-							sqlStr = 'select deviceId, device_mac, device_name, device_status, device_active_time, device_bind_time, device_cp_id, device_user_id, device_status, device_status, device_IoT_org, device_IoT_type, case when device_status = 0 then "unopened" when device_status = 1 then "active"  when device_status = 2 then "binding" when device_status = 3 then "in used" else "unknown" end as statusDesc  from api_device_info where device_type = "LoRaM" and device_user_id = '+actInfo.userId;
+							sqlStr = 'select deviceId, device_mac, device_name, device_status, device_active_time, device_bind_time, device_cp_id, device_user_id, device_status, device_status, device_IoT_org, device_IoT_type, fport, case when device_status = 0 then "unopened" when device_status = 1 then "active"  when device_status = 2 then "binding" when device_status = 3 then "in used" else "unknown" end as statusDesc  from api_device_info where device_type = "LoRaM" and device_user_id = '+actInfo.userId;
 						} else {
 							// set fail result
 							res.send({
@@ -969,6 +990,7 @@ module.exports = (function() {
 					//Has user mapping or not?
 					if(result2.length > 0) {
 						//User mapping is exist
+						
 						next(err2, result2);
 					} else {
 						// set fail result
@@ -979,12 +1001,12 @@ module.exports = (function() {
 						return;
 					}
 				});
-			},
+			}/*,
 			function(deviceList, next){
 				let promises = [];
 				let gwArray = [];
 				//Check device is exist or not
-				/* for bluemix cloudant
+				 for bluemix cloudant
 				let db = 'iotp_kqqhst_default_2018-02-06';
 				let searchName = 'by-eventTypeAndGwId';
 				let s = 0;
@@ -1003,7 +1025,7 @@ module.exports = (function() {
 					leturl = 'https://a9168397-afad-400f-b3c4-a896d9f4c249-bluemix.cloudant.com/'+db+'/_design/iotp/_view/'+searchName+'?key='+q+'&skip='+s+'&limit='+l+'& descending='+descending;
 					promises.push(axios.get(url, {headers : { 'Authorization' : Basic }}));
 				}); */
-				deviceList.forEach(function(device){
+				/* deviceList.forEach(function(device){
 					try {
 						let mac = device.device_mac;
 						console.log('mac : ' + mac);
@@ -1024,7 +1046,7 @@ module.exports = (function() {
 							d['LoRaAP'] = result[0].value.deviceId
 						}else{
 							d['LoRaAP'] = 'NA'
-						} */
+						} 
 						// For mongoDB data format
 						try {
 							let result = results[i].data.data;
@@ -1043,8 +1065,8 @@ module.exports = (function() {
 						}
 					}
 					next(null, gwArray);
-				});
-			}
+				}); 
+			}*/
 		], function(err, rst){
 			if(err) {
 				res.send({

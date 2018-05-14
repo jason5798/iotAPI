@@ -37,10 +37,21 @@ module.exports = (function() {
                     // on fulfillment(已實現時)
                     res.status(200);
 					res.setHeader('Content-Type', 'application/json');
-					res.json({
-                        "responseCode" : '000',
-                        "data" : data
-                    });
+					if (data) {
+						res.json({
+							"responseCode" : '000',
+							"responseMsg" : 'success',
+							"size" : data.length,
+							"data" : data
+						});
+					} else {
+						res.json({
+							"responseCode" : '000',
+							"responseMsg" : 'success',
+							"size" : 0,
+							"data" : []
+						});
+					}
                 }, function(reason) {
                     // on rejection(已拒絕時)
                     res.send({
@@ -79,6 +90,7 @@ module.exports = (function() {
 					res.setHeader('Content-Type', 'application/json');
 					res.json({
                         "responseCode" : '000',
+                        "responseMsg" : 'success',
                         "data" : value 
                     });
                 }, function(reason) {
@@ -295,19 +307,36 @@ module.exports = (function() {
 
 	//Delete by macAddr 
 	router.delete('/profiles', function(req, res) {
-		if (req.body.deviceType === null) {
-            res.send({
+		var macAddr = null;
+		var token = null;
+		if (req.query.token) { 
+			token = req.query.token;
+		} else if (req.body.token) { 
+			token = req.body.token;
+		} else {
+			res.send({
 				"responseCode" : '999',
 				"responseMsg" : 'Missing parameter'
 			});
 			return;
 		}
-		util.checkAndParseToken(req.body.token, res,function(err,result){
+		if (req.query.macAddr) { 
+			macAddr = req.query.macAddr;
+		} else if (req.body.macAddr) { 
+			macAddr = req.body.macAddr;
+		} else {
+			res.send({
+				"responseCode" : '999',
+				"responseMsg" : 'Missing parameter'
+			});
+			return;
+		}
+		util.checkAndParseToken(token, res,function(err,result){
 			if (err) {
 				return;
 			} else { 
 				//Token is ok
-                dbProfile.remove({"macAddr": req.body.macAddr}).then(function(data) {
+                dbProfile.remove({"macAddr": macAddr}).then(function(data) {
                     // on fulfillment(已實現時)
                     res.status(200);
 					res.setHeader('Content-Type', 'application/json');

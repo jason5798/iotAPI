@@ -33,10 +33,21 @@ module.exports = (function() {
                     // on fulfillment(已實現時)
                     res.status(200);
 					res.setHeader('Content-Type', 'application/json');
-					res.json({
-                        "responseCode" : '000',
-                        "data" : data
-                    });
+					if (data) {
+						res.json({
+							"responseCode" : '000',
+							"responseMsg" : 'success',
+							"size" : data.length,
+							"data" : data
+						});
+					} else {
+						res.json({
+							"responseCode" : '000',
+							"responseMsg" : 'success',
+							"size" : 0,
+							"data" : []
+						});
+					}
                 }, function(reason) {
                     // on rejection(已拒絕時)
                     res.send({

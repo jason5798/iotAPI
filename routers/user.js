@@ -501,10 +501,21 @@ module.exports = (function() {
 	router.delete('/users', function(req, res) {
 		//Check params
 		var actInfo = {};
-		var token = req.query.token;
-		if (req.query.delUserId) { 
-			actInfo.delUserIdr = req.query.delUserId;
-		} else if (req.body.delUserId) { 
+		var token = null;
+		if (req.query.token) {
+			token = req.query.token;
+		} else if (req.body.token) {
+			token = req.body.token;
+		} else {
+			res.send({
+				"responseCode" : '999',
+				"responseMsg" : 'Missing parameter'
+			});
+			return;
+		}
+		if (req.query.delUserId) {
+			actInfo.delUserId = req.query.delUserId;
+		} else if (req.body.delUserId) {
 			actInfo.delUserId = req.body.delUserId;
 		} else {
 			res.send({
@@ -513,16 +524,15 @@ module.exports = (function() {
 			});
 			return;
 		}
-		actInfo.delUserId = delUserId;
-		//Jason add for log record 2018.04.20 -- start 
-		if (req.query.createUser) { 
+		//Jason add for log record 2018.04.20 -- start
+		if (req.query.createUser) {
 			actInfo.createUser = req.query.createUser;
-		} else if (req.body.createUser) { 
+		} else if (req.body.createUser) {
 			actInfo.createUser = req.body.createUser;
 		}
 		if (req.query.userName) {
 			actInfo.userName = req.query.userName;
-		} else if (req.body.userName) { 
+		} else if (req.body.userName) {
 			actInfo.userNamer = req.body.userName;
 		}
 		//Jason add for log record 2018.04.20  -- end
