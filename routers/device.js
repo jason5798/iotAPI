@@ -774,13 +774,13 @@ module.exports = (function() {
 						actInfo = util.addJSON(actInfo, result1.userInfo);
 						if (actInfo.dataset === 0) {
 							// set all device query
-							sqlStr = 'select deviceId, device_mac, device_name, device_status, device_active_time, device_bind_time, device_cp_id, device_user_id, device_status, remark, device_IoT_org, device_IoT_type, case when device_status = 0 then "unopened" when device_status = 1 then "active"  when device_status = 2 then "binding" when device_status = 3 then "in used" else "unknown" end as statusDesc  from api_device_info where device_type = "LoRaM"';
+							sqlStr = 'select deviceId, device_mac, device_name, device_status, device_active_time, device_bind_time, device_cp_id, device_user_id, device_status, remark, device_IoT_org, device_IoT_type, fport, case when device_status = 0 then "unopened" when device_status = 1 then "active"  when device_status = 2 then "binding" when device_status = 3 then "in used" else "unknown" end as statusDesc  from api_device_info where device_type = "LoRaM"';
 						} else if (actInfo.dataset === 1) {
 							// set CP device query
-							sqlStr = 'select deviceId, device_mac, device_name, device_status, device_active_time, device_bind_time, device_cp_id, device_user_id, device_status, remark, device_IoT_org, device_IoT_type, case when device_status = 0 then "unopened" when device_status = 1 then "active"  when device_status = 2 then "binding" when device_status = 3 then "in used" else "unknown" end as statusDesc  from api_device_info where device_type = "LoRaM" and device_cp_id = '+actInfo.cpId;
+							sqlStr = 'select deviceId, device_mac, device_name, device_status, device_active_time, device_bind_time, device_cp_id, device_user_id, device_status, remark, device_IoT_org, device_IoT_type, fport, case when device_status = 0 then "unopened" when device_status = 1 then "active"  when device_status = 2 then "binding" when device_status = 3 then "in used" else "unknown" end as statusDesc  from api_device_info where device_type = "LoRaM" and device_cp_id = '+actInfo.cpId;
 						} else if (actInfo.dataset === 2) {
 							// set user device query
-							sqlStr = 'select deviceId, device_mac, device_name, device_status, device_active_time, device_bind_time, device_cp_id, device_user_id, device_status, remark, device_IoT_org, device_IoT_type, case when device_status = 0 then "unopened" when device_status = 1 then "active"  when device_status = 2 then "binding" when device_status = 3 then "in used" else "unknown" end as statusDesc  from api_device_info where device_type = "LoRaM" and device_user_id = '+actInfo.userId;
+							sqlStr = 'select deviceId, device_mac, device_name, device_status, device_active_time, device_bind_time, device_cp_id, device_user_id, device_status, remark, device_IoT_org, device_IoT_type, fport, case when device_status = 0 then "unopened" when device_status = 1 then "active"  when device_status = 2 then "binding" when device_status = 3 then "in used" else "unknown" end as statusDesc  from api_device_info where device_type = "LoRaM" and device_user_id = '+actInfo.userId;
 						} else {
 							// set fail result
 							res.send({
@@ -810,14 +810,14 @@ module.exports = (function() {
 						return;
 					}
 				});
-			},
+			}/*,
 			function(deviceList, next){
 				// deviceList.forEach(function(device){
 				
 				getData(deviceList, function(err3,resuly3){
 					next(err3, resuly3);
 				})
-				/*let promises = [];
+				let promises = [];
 				let gwArray = [];
 					try {
 						let mac = device.device_mac;
@@ -855,15 +855,15 @@ module.exports = (function() {
 						}
 					}
 					next(null, gwArray);
-				});*/
-			}
+				});
+			}*/
 		], function(err, rst){
 			if(err && err !== 'finish') {
 				res.send({
 					"responseCode" : '404',
 					"responseMsg" : 'update fail'
 				});
-			} else if(err && err === 'finish'){
+			} else {
 				if ( rst.length > 0) {
 					res.send({
 						"responseCode" : '000',
@@ -990,7 +990,6 @@ module.exports = (function() {
 					//Has user mapping or not?
 					if(result2.length > 0) {
 						//User mapping is exist
-						
 						next(err2, result2);
 					} else {
 						// set fail result
