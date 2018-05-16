@@ -434,6 +434,9 @@ module.exports = (function() {
 			});
 			return;
 		}
+		if (req.body.fport) {
+		    actInfo.fport = req.body.fport;
+		}
 		actInfo.type = type;
 		actInfo.mac = mac;
 		actInfo.token = req.body.token;
@@ -459,7 +462,10 @@ module.exports = (function() {
 							});
 							return;
 						}
-						let sqlStr = 'INSERT INTO `cloudb`.`api_device_info` ( `device_mac`, `device_name`, `device_status`, `device_type`, `device_share`, `device_IoT_org`, `device_IoT_type`, `createTime`, `createUser`, `device_user_id`) VALUES ( "'+actInfo.mac+'", "'+actInfo.mac+'", 0, "'+actInfo.type+'", '+actInfo.share+', "'+actInfo.org+'", "'+actInfo.type+'", current_time(), '+actInfo.userId+','+actInfo.userId+') '
+						let sqlStr = 'INSERT INTO `cloudb`.`api_device_info` ( `device_mac`, `device_name`, `device_status`, `device_type`, `device_share`, `device_IoT_org`, `device_IoT_type`, `createTime`, `createUser`, `device_user_id`, `device_cp_id`) VALUES ( "'+actInfo.mac+'", "'+actInfo.mac+'", 0, "'+actInfo.type+'", '+actInfo.share+', "'+actInfo.org+'", "'+actInfo.type+'", current_time(), '+actInfo.userId+','+actInfo.userId+','+actInfo.cpId+') '
+						if (actInfo.fport) {
+							sqlStr = 'INSERT INTO `cloudb`.`api_device_info` ( `device_mac`, `device_name`, `device_status`, `device_type`, `device_share`, `device_IoT_org`, `device_IoT_type`, `createTime`, `createUser`, `device_user_id`, `device_cp_id`, `fport`) VALUES ( "'+actInfo.mac+'", "'+actInfo.mac+'", 0, "'+actInfo.type+'", '+actInfo.share+', "'+actInfo.org+'", "'+actInfo.type+'", current_time(), '+actInfo.userId+','+actInfo.userId+','+actInfo.cpId+',"'+actInfo.fport+'") '
+						}
 						console.log('/device post sqlStr :\n' + sqlStr);
 						next(err1, sqlStr);
 					}
@@ -537,11 +543,15 @@ module.exports = (function() {
 					return;
 				}
 				/* ************************************************************/
-				actInfo.macList.forEach(function(mac){
+				actInfo.macList.forEach(function(obj){
 					try {
-						console.log('mac : ' + mac);
+						console.log('mac : ' + obj.mac);
 						let url = 'http://localhost:'+config.port +'/device/v1/device';
-						promises.push(axios.post(url,  { 'token' : actInfo.token, d: mac, type: actInfo.type}));
+						var json = { 'token' : actInfo.token, d: obj.mac, type: actInfo.type};
+						if (obj.fport) {
+							json.fport = obj.fport;
+						}
+						promises.push(axios.post(url, json));
 					} catch (error) {
 						console.log('???? get AP of loraM err: ' + err);
 					}
